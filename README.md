@@ -1,7 +1,7 @@
-# Jasper Report REST
+# Jasper Reports API
 ## A service for generating arbitrary reports using jasper reports library
 
-Jasper reports is one of the oldest and most-mature report generation libraries in the java eco-system, having several greate features such as :
+Jasper reports is one of the oldest and most-mature report generation libraries in the java eco-system, having several great features such as :
 - Good support for multiple output formats, from PDF, to even XLSX files.
 - A large set of features, configurations that covers a lot of use cases.
 - Can work with numerous data sources, from SQL database to JSON and XML files.
@@ -12,14 +12,13 @@ Unfortunately, in the era of microservices, Jasper Reports is not there yet. Bei
 In a system using microservices architecture, or when working with another technology than java, it is usually easier to have a central report engine that all services use, which is expected to be:
 - Light weight service, easily scalable.
 - Flexible, so it can generate arbitrary reports.
-- Secure. As reports can have acccess to sensitive data.
+- Secure. As reports can have access to sensitive data.
 
-Unfortunately, I couldn't find an opensource solution that meet such criteria. Tibco Jasper server is a legacy application and mainly targets enterprises. It is a standalone heavyweight solution that provides report management and generation solutions, mainly for non-technical users. This is not the use case for mircroservice systems requiring a report service.
+Unfortunately, I couldn't find an opensource solution that meet such criteria. Tibco Jasper server is a legacy application and mainly targets enterprises. It is a standalone heavyweight solution that provides report design, management and generation features, mainly for non-technical users. This is not the use case for microservice systems requiring a report service.
 
-This project is an attempt to provide an opensource report service that fits in a mircroservice systems, providing a REST API for just running and generating reports.
+This project is an attempt to provide an opensource report service that fits in a microservices system, providing a REST API for just running and generating reports.
 The project is still in early stages, and currently has the following limitations:
 - Reports JRXML files are saved in a local storage accessible to the service.
-- Reports currently don't have access to the classpath, so, no custom jars or fonts can be used.
 
 The service is currently built using Spring boot 3.x, so, it can use Spring boot various features for security, like JWT, OIDC and OAuth2 support, and the service can be built as: as Fat-jar, Docker image, etc ..
 

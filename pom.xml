@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.galal</groupId>
-	<artifactId>jasper-reports-rest</artifactId>
+	<artifactId>jasper-reports-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>jasper-reports-rest</name>
+	<name>jasper-reports-api</name>
 	<description>REST API for generating jasper reports</description>
 	<url/>
 	<licenses>
