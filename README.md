@@ -26,11 +26,65 @@ This is still in alpha stage. It will mostly work, but use it with caution 😶.
 
 If you met any bugs please create a issue on github or gitlab.
 
+# Usage
+
+The simplest way is to use the app as a docker image:
+- The reports directory on the host machine must be mapped to `/var/reports` in the container.
+- The reports directory is also added as a classpath, so, fonts jar files, and other report resources can be placed there as well.
+- However, reports must be at the top level of the directory.
+- Spring boot configuration env variables can be used to configure security, database connections and other features.
+
+Examples: 
+
+This will run the report server with postgres and html BASIC security. Spring boot will redirect by default to a login screen if no credentials are provided.
+
+```sh
+docker run -it --tty --rm\
+ -v ./src/test/resources/test-reports:/var/reports\
+ -e SPRING_SECURITY_USER_NAME=user\
+ -e SPRING_SECURITY_USER_PASSWORD=pass\
+ -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/postgres\
+ -e SPRING_DATASOURCE_USERNAME=postgres\
+ -e SPRING_DATASOURCE_PASSWORD=postgres\
+ -p 8080:8080\
+ registry.gitlab.com/a.galal7/jasper-reports-api:0.1
+```
+
+Now you can can generate reports by calling the GET REST API. If for example you have the report `emp-report.jrxml`, and you need to run it against your postgresql database, you can generate it as PDF using
+
+`http://localhost:8080/report/emp-report.pdf`
+
+To generate it in another format, change the file extension, for example
+
+`http://localhost:8080/report/emp-report.docx`
+
+Report paramters can be added as query parameters :
+`http://localhost:8080/report/emp-report.pdf?dep_id=1&month=11`
+
+Current supported extensions are : `pdf`, `docx`, `xlsx`,`html`, `csv`
+
+
+or use the following curl command
+
+```sh
+curl 'http://localhost:8080/report/emp-report.pdf' \
+  -H 'Authorization: Basic dXNlcjpwYXNz'\
+  -o emp_report.pdf
+```
+
+
 # Installation and development
 
+run to package the application as a jar file
 ```shell
 ./mvnw install
 ```
+
+to generate a docker image, we are using spring boot default image builder, then customize the generated image.
+```shell
+./mvnw clean spring-boot:build-image docker:build
+```
+
 
 To Build and run the service in dev mode. 
 This will :
@@ -44,16 +98,3 @@ This will :
 ```shell
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
-
-Now you can can generate reports by calling the GET REST API. If for example you have the report `myreport.jraxml`, and you need to run it against your mssql database, you can generate it as PDF using
-
-`http://localhost:8080/report/emp-report.pdf`
-
-To generate it in another format, change the file extension, for example
-
-`http://localhost:8080/report/emp-report.docx`
-
-Report paramters can be added as query parameters :
-`http://localhost:8080/report/emp-report.pdf?dep_id=1&month=11`
-
-Current supported extensions are : `pdf`, `docx`, `xlsx`,`html`, `csv`

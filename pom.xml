@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>dev.galal</groupId>
 	<artifactId>jasper-reports-api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1</version>
 	<name>jasper-reports-api</name>
 	<description>REST API for generating jasper reports</description>
 	<url/>
@@ -28,8 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<version.jasperreports>6.20.5
-		</version.jasperreports>
+		<version.jasperreports>6.20.5</version.jasperreports>
+		<image-name>registry.gitlab.com/a.galal7/jasper-reports-api</image-name>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -56,6 +56,12 @@
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
 			<artifactId>jasperreports</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-fonts</artifactId>
 			<version>${version.jasperreports}</version>
 		</dependency>
 
@@ -146,12 +152,27 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<image>
+						<name>${image-name}:temp</name>
+					</image>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.45.0</version>
+				<configuration>
+					<images>
+						<image>
+							<name>${image-name}:${project.version}</name>
+						</image>
+					</images>
 				</configuration>
 			</plugin>
 		</plugins>

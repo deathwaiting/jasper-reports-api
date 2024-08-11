@@ -2,8 +2,6 @@ package dev.galal.jasperreports.rest;
 
 import io.restassured.RestAssured;
 import io.restassured.config.LogConfig;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
@@ -189,12 +187,12 @@ public class GetJdbcReportTest {
                 .and()
                 .body(jsonEquals("""
                         {
-                            "type": "about:blank",
-                            "title": "Not Acceptable",
-                            "status": 406,
-                            "detail": "Unsupported Extension",
-                            "instance": "/report/NOT_THERE.pdf"
-                        }
+                             "type": "about:blank",
+                             "title": "Not Acceptable",
+                             "status": 406,
+                             "detail": "Unsupported Extension",
+                             "instance": "/report/emp-report.mp3"
+                         }
                         """));
     }
 
