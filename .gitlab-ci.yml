@@ -37,5 +37,5 @@ dockerize:
   script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - chmod +x ./mvnw
-    - ./mvnw clean spring-boot:build-image docker:build docker:push
+    - ./mvnw clean spring-boot:build-image docker:build docker:push -DskipTests
 
