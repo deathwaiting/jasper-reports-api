@@ -30,8 +30,8 @@ stages:
 #   artifacts:
 #     paths:
 #       - target/*.jar
-variables:
-  DOCKER_HOST: tcp://localhost:2375
+# variables:
+#   DOCKER_HOST: tcp://localhost:2375
 
 dockerize:
   stage: dockerize
