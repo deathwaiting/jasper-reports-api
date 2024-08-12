@@ -36,6 +36,8 @@ stages:
 dockerize:
   stage: dockerize
   image: ahmedgalalfathy/dind-jdk-21:latest
+  services:
+    - docker:dind
   script:
     #download font packages needed for jasper reports to run during tests
     - apk update && apk add freetype-dev fontconfig-dev ttf-dejavu
