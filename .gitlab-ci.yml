@@ -16,28 +16,25 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 stages:
-  - build
-#   - dockerize
+  # - build
+  - dockerize
 
-variables:
-  IMAGE_NAME: "yourusername/yourprojectname"
+# variables:
+#   IMAGE_NAME: "yourusername/yourprojectname"
 
-build:
-  stage: build
-  image: maven:3.8.4-openjdk-21
-  script:
-    - ./mvnw clean spring-boot:build-image docker:build docker:push
+# build:
+#   stage: build
+#   image: maven:3.8.4-openjdk-21
+#   script:
+#     - ./mvnw clean spring-boot:build-image docker:build docker:push
 #   artifacts:
 #     paths:
 #       - target/*.jar
 
-# dockerize:
-#   stage: dockerize
-#   image: docker:20.10.7-dind
-#   services:
-#     - docker:dind
-#   script:
-#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-#     - docker build -t $IMAGE_NAME .
-#     - docker push $IMAGE_NAME
+dockerize:
+  stage: dockerize
+  image: ahmedgalalfathy/dind-jdk-21:latest
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - ./mvnw clean spring-boot:build-image docker:build docker:push
 
