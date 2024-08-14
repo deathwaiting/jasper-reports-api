@@ -16,7 +16,7 @@ In a system using microservices architecture, or when working with another techn
 
 Unfortunately, I couldn't find an opensource solution that meet such criteria. Tibco Jasper server is a legacy application and mainly targets enterprises. It is a standalone heavyweight solution that provides report design, management and generation features, mainly for non-technical users. This is not the use case for microservice systems requiring a report service.
 
-This project is an attempt to provide an opensource report service that fits in a microservices system, providing a REST API for just running and generating reports.
+This project is an attempt to provide an opensource report server that fits in a microservices system, providing a REST API for just running and generating reports.
 The project is still in early stages, and currently has the following limitations:
 - Reports JRXML files are saved in a local storage accessible to the service.
 
@@ -31,12 +31,11 @@ If you met any bugs please create a issue on github or gitlab.
 The simplest way is to use the app as a docker image:
 - The reports directory on the host machine must be mapped to `/var/reports` in the container.
 - The reports directory is also added as a classpath, so, fonts jar files, and other report resources can be placed there as well.
-- However, reports must be at the top level of the directory.
 - Spring boot configuration env variables can be used to configure security, database connections and other features.
 
-Examples: 
+## Examples 
 
-This will run the report server with postgres and html BASIC security. Spring boot will redirect by default to a login screen if no credentials are provided.
+This will run the report server, connect it to postgres database, and uses html BASIC security. By default, Spring boot will redirect to a login screen if no credentials are provided.
 
 ```sh
 docker run -it --tty --rm\
@@ -50,27 +49,29 @@ docker run -it --tty --rm\
  registry.gitlab.com/a.galal7/jasper-reports-api:0.1
 ```
 
-Now you can can generate reports by calling the GET REST API. If for example you have the report `emp-report.jrxml`, and you need to run it against your postgresql database, you can generate it as PDF using
+If for example you have the report `emp-report.jrxml` in the report directory, you can generate it as PDF using
 
-`http://localhost:8080/report/emp-report.pdf`
+[http://localhost:8080/report/emp-report.pdf](http://localhost:8080/report/emp-report.pdf)
 
-To generate it in another format, change the file extension, for example
-
-`http://localhost:8080/report/emp-report.docx`
-
-Report paramters can be added as query parameters :
-`http://localhost:8080/report/emp-report.pdf?dep_id=1&month=11`
-
-Current supported extensions are : `pdf`, `docx`, `xlsx`,`html`, `csv`
-
-
-or use the following curl command
+Or with curl command
 
 ```sh
 curl 'http://localhost:8080/report/emp-report.pdf' \
   -H 'Authorization: Basic dXNlcjpwYXNz'\
-  -o emp_report.pdf
+  -o emp-report.pdf
 ```
+
+Report parameters can be added as query parameters :
+
+[http://localhost:8080/report/emp-report.pdf?dep_id=1&month=11](http://localhost:8080/report/emp-report.pdf?dep_id=1&month=11)
+
+
+
+To generate it in another format, change the file extension, for example:
+
+[http://localhost:8080/report/emp-report.docx](http://localhost:8080/report/emp-report.docx)
+
+Current supported extensions are : `pdf`, `docx`, `xlsx`,`html`, `csv`
 
 
 # Installation and development

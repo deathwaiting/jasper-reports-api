@@ -73,7 +73,7 @@ public class GetJdbcReportTest {
                 givenAuthenticated()
                         .queryParam("dep_id", "1")
                         .when()
-                            .get("/report/emp-report.pdf")
+                            .get("/report/inner-dir/emp-report.pdf")
                         .andReturn();
         response.then()
                 .statusCode(200)
