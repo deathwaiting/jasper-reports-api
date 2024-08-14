@@ -132,6 +132,12 @@
 			<artifactId>eclipse-collections</artifactId>
 			<version>12.0.0.M3</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>io.rest-assured</groupId>
 			<artifactId>rest-assured</artifactId>

@@ -32,8 +32,9 @@ The simplest way is to use the app as a docker image:
 - The reports directory on the host machine must be mapped to `/var/reports` in the container.
 - The reports directory is also added as a classpath, so, fonts jar files, and other report resources can be placed there as well.
 - Spring boot configuration env variables can be used to configure security, database connections and other features.
+- Reports are cached in-memory by default. For more info check the caching section below.
 
-## Examples 
+#### Examples 
 
 This will run the report server, connect it to postgres database, and uses html BASIC security. By default, Spring boot will redirect to a login screen if no credentials are provided.
 
@@ -99,3 +100,12 @@ This will :
 ```shell
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+
+# Caching
+
+- The application will cache compiled JasperReports instances by default, this provides a huge performance boost for reports saved on disk.
+- As reports are rarely updated - at least not daily-, the cache life-time can be set to higher values.
+- We are using in-memory cache, which has better performance, but also means restarting the application will evict all entries.
+- Cache can be configured using the following env variables :
+  - `DEV_GALAL_JASPER_REST_SERVER_REPORTS_CACHE_TTL` will set the time-to-live in minutes, default value is 1440 (24 hours).
+  - `DEV_GALAL_DEV_GALAL_JASPER_REST_SERVER_REPORTS_CACHE_SIZE` will set the maximum number of reports to cache, default is 512.
