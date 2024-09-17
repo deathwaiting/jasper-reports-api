@@ -2,8 +2,6 @@ package dev.galal.jasperreports.rest;
 
 import io.restassured.RestAssured;
 import io.restassured.config.LogConfig;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,10 +14,8 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
 
-import static io.restassured.RestAssured.given;
+import static dev.galal.jasperreports.rest.Utils.*;
 import static net.javacrumbs.jsonunit.JsonMatchers.jsonEquals;
 import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -28,8 +24,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 public class GetJdbcReportTest {
 
-    private static final String USERNAME = "user";
-    private static final String PASSWORD = "pass";
+
 
     @Autowired
     DataSource dataSource;
@@ -196,24 +191,5 @@ public class GetJdbcReportTest {
                         """));
     }
 
-    private static void saveReportToTmpFile(Response response, String ext) throws IOException {
-        var fileContent = response.asByteArray();
-        var tmpFile = Files.createTempFile("jasperreport-", "." + ext);
-        Files.write(tmpFile, fileContent);
-        log.info(">>>>>>>> Report downloaded to:  " + tmpFile);
-    }
-
-
-    private boolean dataExists(Connection conn) throws SQLException {
-        var stmt = conn.createStatement();
-        var result = stmt.executeQuery("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'EMPLOYEE';\n");
-        result.first();
-        return result.getInt(1) > 0;
-    }
-
-
-    private static RequestSpecification givenAuthenticated() {
-        return given().auth().basic(USERNAME, PASSWORD);
-    }
 
 }

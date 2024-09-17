@@ -5,8 +5,7 @@ services:
     volumes:
       - ./src/test/resources/test-reports:/var/reports
     environment:
-      SPRING_SECURITY_USER_NAME: user
-      SPRING_SECURITY_USER_PASSWORD: pass
+      SPRING_PROFILES_ACTIVE: security-off
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres

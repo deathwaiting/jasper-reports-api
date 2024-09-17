@@ -7,7 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
-@Profile("dev")
+@Profile({"dev", "security-off"})
 public class DevProfileSecurity {
 
     @Bean
