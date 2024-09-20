@@ -16,7 +16,7 @@
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="82" splitType="Stretch">
+		<band height="92" splitType="Stretch">
 			<staticText>
 				<reportElement x="190" y="30" width="176" height="30" uuid="089f5670-0ed3-4ddc-8243-3dc30f258483"/>
 				<textElement textAlignment="Center">
@@ -24,6 +24,10 @@
 				</textElement>
 				<text><![CDATA[TEST]]></text>
 			</staticText>
+			<image>
+				<reportElement x="370" y="20" width="50" height="50" uuid="4622b91a-facf-4448-a68a-989e67fbf975"/>
+				<imageExpression><![CDATA["ico.jpg"]]></imageExpression>
+			</image>
 		</band>
 	</title>
 	<pageHeader>

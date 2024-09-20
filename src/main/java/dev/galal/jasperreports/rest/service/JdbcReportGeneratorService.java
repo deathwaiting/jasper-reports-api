@@ -4,10 +4,7 @@ import dev.galal.jasperreports.rest.config.exception.AppError;
 import dev.galal.jasperreports.rest.service.ReportHandlers.ReportHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -23,6 +20,7 @@ import java.util.Map;
 import static dev.galal.jasperreports.rest.config.cache.CacheConfig.REPORTS_CACHE;
 import static dev.galal.jasperreports.rest.config.exception.AppError.REPORT_NOT_FOUND;
 import static dev.galal.jasperreports.rest.service.ReportHandlers.getReportHandler;
+import static net.sf.jasperreports.engine.JRPropertiesUtil.PROPERTY_PREFIX;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @Service
@@ -52,6 +50,7 @@ public class JdbcReportGeneratorService {
     private byte[] doGenerateReport(String requestedReport, ReportHandler handler, Map<String, String> params) {
         try {
             var jasperReport = compileOrGetFromCache(requestedReport);
+            jasperReport.setJasperReportsContext(DefaultJasperReportsContext.getInstance());
             var jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(params), dataSource.getConnection());
             return handler.exporter().apply(jasperPrint);
         } catch (SQLException | JRException e) {
@@ -81,7 +80,11 @@ public class JdbcReportGeneratorService {
         if(!Files.exists(filePath)) {
             AppError.notAcceptable(REPORT_NOT_FOUND);
         }
-        return JasperCompileManager.compileReport(filePath.toAbsolutePath().toString());
+        var jasperReport = JasperCompileManager.compileReport(filePath.toAbsolutePath().toString());
+        var context = new SimpleJasperReportsContext();
+        context.setProperty(PROPERTY_PREFIX + "current.dir", filePath.getParent().toAbsolutePath().toString());
+        jasperReport.setJasperReportsContext(context);
+        return jasperReport;
     }
 
 
