@@ -5,6 +5,11 @@ import dev.galal.jasperreports.rest.service.ReportHandlers.ReportHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.fill.JRFiller;
+import net.sf.jasperreports.engine.fill.JasperReportSource;
+import net.sf.jasperreports.engine.fill.SimpleJasperReportSource;
+import net.sf.jasperreports.repo.RepositoryResourceContext;
+import net.sf.jasperreports.repo.SimpleRepositoryResourceContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -13,6 +18,7 @@ import org.springframework.stereotype.Service;
 import javax.sql.DataSource;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,8 +56,8 @@ public class JdbcReportGeneratorService {
     private byte[] doGenerateReport(String requestedReport, ReportHandler handler, Map<String, String> params) {
         try {
             var jasperReport = compileOrGetFromCache(requestedReport);
-            jasperReport.setJasperReportsContext(DefaultJasperReportsContext.getInstance());
-            var jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(params), dataSource.getConnection());
+            var jrxmlPath = getJrxmlFilePath(requestedReport);
+            var jasperPrint = fillReport(jasperReport, jrxmlPath,  new HashMap<>(params), dataSource.getConnection());
             return handler.exporter().apply(jasperPrint);
         } catch (SQLException | JRException e) {
             log.error("Failed to generate report", e);
@@ -75,16 +81,16 @@ public class JdbcReportGeneratorService {
 
 
     private JasperReport compileJrxmlFile(String requestedReport) throws JRException {
-        var jrxmlFile = replaceExtension(requestedReport, "jrxml");
-        var filePath = Path.of(reportsDir).resolve(jrxmlFile);
-        if(!Files.exists(filePath)) {
+        var jrxmlReport = getJrxmlFilePath(requestedReport);
+        if(!Files.exists(jrxmlReport)) {
             AppError.notAcceptable(REPORT_NOT_FOUND);
         }
-        var jasperReport = JasperCompileManager.compileReport(filePath.toAbsolutePath().toString());
-        var context = new SimpleJasperReportsContext();
-        context.setProperty(PROPERTY_PREFIX + "current.dir", filePath.getParent().toAbsolutePath().toString());
-        jasperReport.setJasperReportsContext(context);
-        return jasperReport;
+        return JasperCompileManager.compileReport(jrxmlReport.toAbsolutePath().toString());
+    }
+
+    private Path getJrxmlFilePath(String requestedReport) {
+        var jrxmlFile = replaceExtension(requestedReport, "jrxml");
+        return Path.of(reportsDir).resolve(jrxmlFile);
     }
 
 
@@ -96,5 +102,23 @@ public class JdbcReportGeneratorService {
     public static String replaceExtension(String fileName, String newExt) {
         int dotIndex = fileName.lastIndexOf('.');
         return (dotIndex > 0)? fileName.substring(0, dotIndex) + "." + newExt : "No extension";
+    }
+
+    private static JasperPrint fillReport(JasperReport jasperReport, Path jrxmlPath, Map<String, Object> params, Connection connection) throws JRException {
+        //JRFiller is used directly instead of JasperFillManager because the latter doesn't have a method that
+        // generates JasperPrint that can handle resources with relative paths
+        return JRFiller.fill(DefaultJasperReportsContext.getInstance(),
+                getReportSource(jrxmlPath.toAbsolutePath(), jasperReport),
+                params, connection);
+    }
+
+    private static JasperReportSource getReportSource(Path reportFile, JasperReport jasperReport)
+    {
+        //attempting resolve absolute paths as relative, that's what SimpleFileResolver(".") did
+        RepositoryResourceContext fallbackContext = SimpleRepositoryResourceContext.of(".");
+        SimpleRepositoryResourceContext reportContext = SimpleRepositoryResourceContext.of(
+                reportFile.getParent().toAbsolutePath().toString(), fallbackContext);
+
+        return SimpleJasperReportSource.from(jasperReport, reportFile.toAbsolutePath().toString(), reportContext);
     }
 }
