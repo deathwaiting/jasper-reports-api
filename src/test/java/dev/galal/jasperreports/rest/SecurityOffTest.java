@@ -84,7 +84,7 @@ public class SecurityOffTest {
                 given()
                         .queryParam("dep_id", "1")
                         .when()
-                        .get("/report/book/book.pdf")
+                        .get("/report/book/book.pdf?JR_force_compile=true")
                         .andReturn();
         response.then()
                 .statusCode(200)

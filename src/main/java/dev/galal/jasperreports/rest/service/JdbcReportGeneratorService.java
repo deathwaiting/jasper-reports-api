@@ -66,11 +66,7 @@ public class JdbcReportGeneratorService {
             var jasperReport = compileOrGetFromCache(requestedReport);
             var jrxmlPath = getJrxmlFilePath(requestedReport);
 
-            //Disable this for now, it was made to support the case where sub-report expression is ".jrxml" file instead of compiled ".jasper"
-            //This was done to try following jasper studio behavior, but still can't configure jasper reports to search for .jasper files
-            //instead of .jrxml when filling the report, this probably can be done with a custom extension for DefaultRepositoryService to handle this case,
-            //but this doesn't have a priority for now, the server can handle sub-reports with jasper files provided.
-            if(ENABLE_SUB_REPORT_COMPILE) {
+            if(params.getOrDefault("JR_force_compile", "false").equalsIgnoreCase("true")) {
                 compileSubReports(jasperReport, jrxmlPath);
             }
 
