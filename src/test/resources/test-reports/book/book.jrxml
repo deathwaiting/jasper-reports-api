@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.20.5.final using JasperReports Library version 6.20.5-3efcf2e67f959db3888d79f73dde2dbd7acb4f8e  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="book" pageWidth="595" pageHeight="842" sectionType="Part" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" uuid="d2716064-8ae4-40cf-a575-33afba400e3a">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="net.sf.jasperreports.print.create.bookmarks" value="true"/>
+	<queryString>
+		<![CDATA[select count(email) from Employee]]>
+	</queryString>
+	<detail>
+		<part uuid="d520440f-6f9c-4b33-a897-1cb139f6173f">
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA["./emp-report.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+	</detail>
+</jasperReport>

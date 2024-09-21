@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.20.5.final using JasperReports Library version 6.20.5-3efcf2e67f959db3888d79f73dde2dbd7acb4f8e  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isTitleNewPage="true" uuid="fb66eba7-2a26-4252-a4da-3febbb83d327">
+	<queryString>
+		<![CDATA[select count(email) from Employee]]>
+	</queryString>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="126">
+			<staticText>
+				<reportElement x="0" y="0" width="555" height="126" uuid="eeca4632-83f8-46ad-a53b-ca6752f9bc6e"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="18" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Sub Report Demo]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="802" splitType="Stretch">
+			<subreport>
+				<reportElement x="0" y="0" width="555" height="802" uuid="732590ae-d993-4626-8314-12d320e50c8b"/>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["./emp-report.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

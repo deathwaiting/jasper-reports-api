@@ -76,4 +76,38 @@ public class SecurityOffTest {
 
         saveReportToTmpFile(response, "pdf");
     }
+
+
+    @Test
+    void getBookPdfReport() throws IOException {
+        var response =
+                given()
+                        .queryParam("dep_id", "1")
+                        .when()
+                        .get("/report/book/book.pdf")
+                        .andReturn();
+        response.then()
+                .statusCode(200)
+                .and()
+                .contentType(equalTo("application/pdf"));
+
+        saveReportToTmpFile(response, "pdf");
+    }
+
+
+    @Test
+    void getSubReportPdfReport() throws IOException {
+        var response =
+                given()
+                        .queryParam("dep_id", "1")
+                        .when()
+                        .get("/report/sub-report/report.pdf")
+                        .andReturn();
+        response.then()
+                .statusCode(200)
+                .and()
+                .contentType(equalTo("application/pdf"));
+
+        saveReportToTmpFile(response, "pdf");
+    }
 }
