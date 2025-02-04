@@ -83,7 +83,6 @@ public class GetJdbcReportTest {
     void getXlsxReport() throws IOException {
         var response =
                 givenAuthenticated()
-                        .queryParam("dep_id", "1")
                         .when()
                         .get("/report/emp-report.xlsx")
                         .andReturn();
@@ -99,7 +98,6 @@ public class GetJdbcReportTest {
     void getHtmlReport() throws IOException {
         var response =
                 givenAuthenticated()
-                        .queryParam("dep_id", "1")
                         .when()
                         .get("/report/emp-report.html")
                         .andReturn();
@@ -116,7 +114,6 @@ public class GetJdbcReportTest {
     void getCsvReport() throws IOException {
         var response =
                 givenAuthenticated()
-                        .queryParam("dep_id", "1")
                         .when()
                         .get("/report/emp-report.csv")
                         .andReturn();
@@ -133,7 +130,6 @@ public class GetJdbcReportTest {
     void getDocxReport() throws IOException {
         var response =
                 givenAuthenticated()
-                        .queryParam("dep_id", "1")
                         .when()
                         .get("/report/emp-report.docx")
                         .andReturn();

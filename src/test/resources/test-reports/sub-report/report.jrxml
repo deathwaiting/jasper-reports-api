@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.20.5.final using JasperReports Library version 6.20.5-3efcf2e67f959db3888d79f73dde2dbd7acb4f8e  -->
+<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isTitleNewPage="true" uuid="fb66eba7-2a26-4252-a4da-3febbb83d327">
+	<property name="com.jaspersoft.studio.data.sql.tables" value="RW1wbG95ZWUgLDE1LDE1LDlkODQ1YWM2LTZkNjQtNDQ4NC05NWY3LTY4MTBkNzM5Y2E5Mjs="/>
+	<parameter name="some_time" class="java.sql.Time"/>
 	<queryString>
 		<![CDATA[select count(email) from Employee]]>
 	</queryString>

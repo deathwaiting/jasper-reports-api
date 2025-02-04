@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.20.5.final using JasperReports Library version 6.20.5-3efcf2e67f959db3888d79f73dde2dbd7acb4f8e  -->
+<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="emp-report" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="434823ba-46e9-4ef4-95a1-468550dda6ae">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sample DB"/>
+	<parameter name="dep_id" class="java.lang.Long" isForPrompting="false"/>
 	<queryString language="SQL">
-		<![CDATA[select first_name, last_name, email, hire_date, job_title, salary, department_id from Employee]]>
+		<![CDATA[select first_name, last_name, email, hire_date, job_title, salary, department_id from Employee where department_id = $P{dep_id}]]>
 	</queryString>
 	<field name="FIRST_NAME" class="java.lang.String">
 		<property name="net.sf.jasperreports.sql.field.column.name" value="FIRST_NAME"/>

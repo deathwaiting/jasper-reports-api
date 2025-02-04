@@ -24,12 +24,14 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static dev.galal.jasperreports.rest.config.cache.CacheConfig.REPORTS_CACHE;
 import static dev.galal.jasperreports.rest.config.exception.AppError.REPORT_NOT_FOUND;
+import static dev.galal.jasperreports.rest.service.JRParameterParser.parseTypedParams;
 import static dev.galal.jasperreports.rest.service.ReportHandlers.getReportHandler;
 import static java.util.Optional.ofNullable;
 import static net.sf.jasperreports.engine.type.SectionTypeEnum.PART;
@@ -40,7 +42,9 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 @Slf4j
 public class JdbcReportGeneratorService {
 
+
     private static final boolean ENABLE_SUB_REPORT_COMPILE = false;
+    public static final String JR_FORCE_COMPILE_PARAM = "JR_force_compile";
 
     public record Report(String fileName, String mediaType, byte[] content){}
 
@@ -66,16 +70,25 @@ public class JdbcReportGeneratorService {
             var jasperReport = compileOrGetFromCache(requestedReport);
             var jrxmlPath = getJrxmlFilePath(requestedReport);
 
-            if(params.getOrDefault("JR_force_compile", "false").equalsIgnoreCase("true")) {
+            if(params.getOrDefault(JR_FORCE_COMPILE_PARAM, "false").equalsIgnoreCase("true")) {
                 compileSubReports(jasperReport, jrxmlPath);
             }
 
-            var jasperPrint = fillReport(jasperReport, jrxmlPath,  new HashMap<>(params), dataSource.getConnection());
+            var typedParams = toTypedParams(params, jasperReport);
+
+            var jasperPrint = fillReport(jasperReport, jrxmlPath,  typedParams, dataSource.getConnection());
             return handler.exporter().apply(jasperPrint);
         } catch (SQLException | JRException e) {
             log.error("Failed to generate report", e);
-            throw new RuntimeException(e);
+            throw new JRRuntimeException(e);
         }
+    }
+
+    private static Map<String, Object> toTypedParams(Map<String, String> params, JasperReport jasperReport) {
+        var filteredParams = params.entrySet().stream()
+                .filter(e -> !Objects.equals(e.getKey(), JR_FORCE_COMPILE_PARAM))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return parseTypedParams(List.of(jasperReport.getParameters()), filteredParams);
     }
 
 
@@ -84,8 +97,8 @@ public class JdbcReportGeneratorService {
             return cacheManager.getCache(REPORTS_CACHE)
                     .get(requestedReport, () -> compileJrxmlFile(requestedReport));
         } catch(Cache.ValueRetrievalException e) {
-            if(e.getCause() instanceof RuntimeException) {
-                throw (RuntimeException)e.getCause();
+            if(e.getCause() instanceof RuntimeException runtimeException) {
+                throw runtimeException;
             } else {
                 log.error("Failed to compile report", e);
                 throw AppError.of(INTERNAL_SERVER_ERROR, "Failed to compile report");
@@ -185,7 +198,7 @@ public class JdbcReportGeneratorService {
                 JasperCompileManager.compileReportToFile(subReportPath.toAbsolutePath().toString());
             }
             catch(Exception e){
-                throw new RuntimeException(e);
+                throw new JRRuntimeException(e);
             }
         }
     }

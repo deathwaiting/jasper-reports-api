@@ -2,7 +2,6 @@ package dev.galal.jasperreports.rest;
 
 import io.restassured.RestAssured;
 import io.restassured.config.LogConfig;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static dev.galal.jasperreports.rest.Utils.*;
+import static dev.galal.jasperreports.rest.Utils.dataExists;
+import static dev.galal.jasperreports.rest.Utils.saveReportToTmpFile;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -82,7 +82,7 @@ public class SecurityOffTest {
     void getBookPdfReport() throws IOException {
         var response =
                 given()
-                        .queryParam("dep_id", "1")
+                        .queryParam("some_date", "2025-01-23")
                         .when()
                         .get("/report/book/book.pdf?JR_force_compile=true")
                         .andReturn();
@@ -99,7 +99,7 @@ public class SecurityOffTest {
     void getSubReportPdfReport() throws IOException {
         var response =
                 given()
-                        .queryParam("dep_id", "1")
+                        .queryParam("some_time", "14:02:56")
                         .when()
                         .get("/report/sub-report/report.pdf")
                         .andReturn();
