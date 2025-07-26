@@ -90,6 +90,12 @@ To generate it in another format, change the file extension, for example:
 
 Current supported extensions are : `pdf`, `docx`, `xlsx`,`html`, `csv`
 
+#### Admin API's
+
+- These are used to debug server issues
+- For now we have `GET /admin/server/info`. Which returns the current report directory and current jrxml files inside it.
+- Admin API's are disabled by default, to enable it the property `dev.galal.jasper-rest-server.admin.api.enabled` needs to be set to `true`.
+
 
 # Installation and development
 

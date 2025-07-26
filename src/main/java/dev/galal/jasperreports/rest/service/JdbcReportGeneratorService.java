@@ -2,6 +2,7 @@ package dev.galal.jasperreports.rest.service;
 
 import dev.galal.jasperreports.rest.config.exception.AppError;
 import dev.galal.jasperreports.rest.service.ReportHandlers.ReportHandler;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
@@ -19,8 +20,10 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -53,6 +56,23 @@ public class JdbcReportGeneratorService {
 
     private final DataSource dataSource;
     private final CacheManager cacheManager;
+
+    @PostConstruct
+    public void init() {
+        var path = Path.of(reportsDir).toAbsolutePath();
+        var jrxmlCount = countJrxml(path);
+        log.info("Serving reports from path :[{}] ... found [{}] JRXML files ...", path, jrxmlCount);
+    }
+
+    private long countJrxml(Path path) {
+        try(var walk = Files.walk(path)) {
+            return walk.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".jrxml"))
+                    .count();
+        } catch (IOException e) {
+            log.error("failed to count JRXML files in report directory ...", e);
+            return -1;
+        }
+    }
 
     public Report generate(String requestedReport, Map<String, String> params) {
         log.debug("Using classloader : " + this.getClass().getClassLoader().getName());
@@ -110,6 +130,7 @@ public class JdbcReportGeneratorService {
     private JasperReport compileJrxmlFile(String requestedReport) throws JRException {
         var jrxmlReport = getJrxmlFilePath(requestedReport);
         if(!Files.exists(jrxmlReport)) {
+            log.warn("Failed to find JRXML file : [{}]", jrxmlReport.toAbsolutePath());
             AppError.notAcceptable(REPORT_NOT_FOUND);
         }
         return JasperCompileManager.compileReport(jrxmlReport.toAbsolutePath().toString());
