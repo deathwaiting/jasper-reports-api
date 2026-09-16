@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -29,8 +29,27 @@
 	<properties>
 		<java.version>21</java.version>
 		<version.jasperreports>6.20.5</version.jasperreports>
+		<version.gatling>3.15.1</version.gatling>
+		<version.gatling-maven-plugin>4.21.11</version.gatling-maven-plugin>
+		<version.kotlin>2.4.10</version.kotlin>
+		<!-- Bump the Lombok managed by Spring Boot 3.3.2 so builds work on JDK 23+ -->
+		<lombok.version>1.18.42</lombok.version>
 		<image-name>registry.gitlab.com/a.galal7/jasper-reports-api</image-name>
+		<kotlin.version>2.4.20</kotlin.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<!-- Gatling 3.15.x requires Netty 4.2 APIs (e.g. io.netty.channel.IoOps)
+			     that Spring Boot 3.3.2's BOM (netty 4.1.111) does not provide -->
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-bom</artifactId>
+				<version>4.2.14.Final</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -186,6 +205,24 @@
 			<version>2.36.1</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib</artifactId>
+			<version>${kotlin.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>${version.gatling}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-test</artifactId>
+			<version>${kotlin.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -217,7 +254,179 @@
 					</images>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.jetbrains.kotlin</groupId>
+				<artifactId>kotlin-maven-plugin</artifactId>
+				<version>${kotlin.version}</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<id>compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration/>
+					</execution>
+					<execution>
+						<id>test-compile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>test-compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>kapt</id>
+						<goals>
+							<goal>kapt</goal>
+						</goals>
+						<configuration>
+							<sourceDirs>
+								<sourceDir>src/main/java</sourceDir>
+							</sourceDirs>
+							<annotationProcessorPaths>
+								<annotationProcessorPath>
+									<groupId>org.springframework.boot</groupId>
+									<artifactId>spring-boot-configuration-processor</artifactId>
+									<version>3.3.2</version>
+								</annotationProcessorPath>
+							</annotationProcessorPaths>
+						</configuration>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>org.jetbrains.kotlin</groupId>
+						<artifactId>kotlin-maven-lombok</artifactId>
+						<version>${kotlin.version}</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<jvmTarget>1.8</jvmTarget>
+					<compilerPlugins>
+						<plugin>lombok</plugin>
+					</compilerPlugins>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<phase>none</phase>
+					</execution>
+					<execution>
+						<id>default-testCompile</id>
+						<phase>none</phase>
+					</execution>
+					<execution>
+						<id>compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>testCompile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<!-- JDK 23+ no longer discovers annotation processors on the classpath -->
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>stress-test</id>
+			<properties>
+				<stress.server.port>18080</stress.server.port>
+				<stress.max.p99.ms>3000</stress.max.p99.ms>
+				<stress.target.vusers>1000</stress.target.vusers>
+				<stress.ramp.duration.seconds>120</stress.ramp.duration.seconds>
+				<stress.hold.duration.seconds>120</stress.hold.duration.seconds>
+				<stress.db.latency.ms>10</stress.db.latency.ms>
+				<stress.dataset.size>50000</stress.dataset.size>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jetbrains.kotlin</groupId>
+						<artifactId>kotlin-maven-plugin</artifactId>
+						<version>${version.kotlin}</version>
+						<executions>
+							<execution>
+								<id>test-compile</id>
+								<goals>
+									<goal>test-compile</goal>
+								</goals>
+								<configuration>
+									<sourceDirs>
+										<sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+									</sourceDirs>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>stress-start</id>
+								<phase>pre-integration-test</phase>
+								<goals>
+									<goal>start</goal>
+								</goals>
+								<configuration>
+									<profiles>stress-test</profiles>
+									<arguments>
+										<argument>--server.port=${stress.server.port}</argument>
+									</arguments>
+									<!-- Propagate -Dstress.* Maven properties into the forked JVM -->
+									<systemPropertyVariables>
+										<stress.db.latency.ms>${stress.db.latency.ms}</stress.db.latency.ms>
+										<stress.dataset.size>${stress.dataset.size}</stress.dataset.size>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>stress-stop</id>
+								<phase>post-integration-test</phase>
+								<goals>
+									<goal>stop</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>io.gatling</groupId>
+						<artifactId>gatling-maven-plugin</artifactId>
+						<version>${version.gatling-maven-plugin}</version>
+						<executions>
+							<execution>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

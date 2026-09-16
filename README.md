@@ -131,3 +131,52 @@ This will :
 - Cache can be configured using the following env variables :
   - `DEV_GALAL_JASPER_REST_SERVER_REPORTS_CACHE_TTL` will set the time-to-live in minutes, default value is 1440 (24 hours).
   - `DEV_GALAL_DEV_GALAL_JASPER_REST_SERVER_REPORTS_CACHE_SIZE` will set the maximum number of cached reports, default is 512.
+
+# Stress testing
+
+The stress test validates the report API under an increasing, linear load. It is implemented with
+[Gatling](https://gatling.io/) (simulations written in Kotlin) and is exposed as a separate optional
+Maven profile, so a regular `./mvnw install` never triggers it.
+
+- It forks the application with an embedded H2 database, populates a relatively large dataset
+  (50 000 employee rows by default), and adds an artificial per-connection latency to mimic a real DB.
+- It uses the same report fixtures as the integration tests, including parameterised reports,
+  reports with image resources, sub-reports and report books.
+- Load ramps linearly from `0` to a target number of concurrent users, then holds that load.
+- Fails (or warns in CI) when the 99th percentile response time exceeds the configured maximum or
+  when requests fail.
+
+Run it with:
+
+```shell
+# Build, start the app with the stress-test profile, run Gatling, stop the app
+./mvnw -Pstress-test verify
+
+# Customise the scenario
+./mvnw -Pstress-test verify \
+  -Dstress.target.vusers=100 \
+  -Dstress.ramp.duration.seconds=300 \
+  -Dstress.hold.duration.seconds=600 \
+  -Dstress.max.p99.ms=5000 \
+  -Dstress.db.latency.ms=20 \
+  -Dstress.dataset.size=100000
+
+# Run Gatling against an already-running instance (skips build + app lifecycle)
+./mvnw -Pstress-test gatling:test -Dstress.base.url=http://localhost:8080
+```
+
+Gatling HTML reports are written to `target/gatling/`. All scenario knobs are overridable via `-Dstress.*` system properties:
+
+| Property | Default | Meaning |
+| --- | --- | --- |
+| `stress.base.url` | `http://localhost:18080` | Target server URL |
+| `stress.target.vusers` | `1000` | Peak / minimum concurrent users to ramp to |
+| `stress.ramp.duration.seconds` | `120` | Ramp-up duration in seconds (linear increase) |
+| `stress.hold.duration.seconds` | `180` | Hold duration in seconds at peak load |
+| `stress.max.p99.ms` | `3000` | Max allowed 99th percentile response time (ms) |
+| `stress.db.latency.ms` | `10` | Artificial per-connection DB latency (ms, from `application-stress-test.properties`) |
+| `stress.db.pool.size` | `100` | Hikari pool size; embedded engines degrade with pools in the hundreds |
+| `stress.dataset.size` | `50000` | Minimum employee rows generated in the embedded DB |
+
+In GitLab CI the stress test runs as a separate optional job after `dockerize` with
+`allow_failure: true`, so a stress regression shows up as a warning instead of breaking the pipeline.

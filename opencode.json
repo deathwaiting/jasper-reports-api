@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "moonshot/kimi-k3",
+  "plugin": ["opencode-supermemory"],
+  "mcp": {
+    "supermemory-docs": {
+      "type": "remote",
+      "url": "https://supermemory.ai/docs/mcp",
+      "enabled": true
+    }
+  }
+}

@@ -96,8 +96,12 @@ public class JdbcReportGeneratorService {
 
             var typedParams = toTypedParams(params, jasperReport);
 
-            var jasperPrint = fillReport(jasperReport, jrxmlPath,  typedParams, dataSource.getConnection());
-            return handler.exporter().apply(jasperPrint);
+            try (Connection connection = dataSource.getConnection()) {
+                // JRFiller does not close connections it didn't open, so we must
+                // return this one to the pool ourselves.
+                var jasperPrint = fillReport(jasperReport, jrxmlPath, typedParams, connection);
+                return handler.exporter().apply(jasperPrint);
+            }
         } catch (SQLException | JRException e) {
             log.error("Failed to generate report", e);
             throw new JRRuntimeException(e);
