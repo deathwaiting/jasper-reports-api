@@ -20,7 +20,7 @@ stages:
 
 dockerize:
   stage: dockerize
-  image: ahmedgalalfathy/dind-jdk-21:latest
+  image: ahmedgalalfathy/dind-jdk-25:latest
   services:
     - docker:dind
   script:
