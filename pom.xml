@@ -34,6 +34,8 @@
 		<version.kotlin>2.4.10</version.kotlin>
 		<!-- Bump the Lombok managed by Spring Boot 3.3.2 so builds work on JDK 23+ -->
 		<lombok.version>1.18.42</lombok.version>
+		<!-- Override the Testcontainers managed by Spring Boot 3.3.2: 1.19.8 bundles docker-java 3.3.6 whose default Docker API version (1.32) is below the minimum (1.40) of recent Docker daemons (e.g. 29.x), so container startup fails with "client version is too old". 1.21.x bundles docker-java which negotiates the API version. -->
+		<testcontainers.version>1.21.4</testcontainers.version>
 		<image-name>registry.gitlab.com/a.galal7/jasper-reports-api</image-name>
 		<kotlin.version>2.4.20</kotlin.version>
 	</properties>
@@ -357,11 +359,40 @@
 				<stress.target.vusers>1000</stress.target.vusers>
 				<stress.ramp.duration.seconds>120</stress.ramp.duration.seconds>
 				<stress.hold.duration.seconds>120</stress.hold.duration.seconds>
-				<stress.db.latency.ms>10</stress.db.latency.ms>
+				<stress.db.latency.ms>0</stress.db.latency.ms>
 				<stress.dataset.size>50000</stress.dataset.size>
 			</properties>
+			<!-- The stress beans live in src/stress/java (compiled only in this profile via
+			     build-helper) and need Testcontainers at runtime. spring-boot:start forks the
+			     app on the runtime classpath (not the test classpath), so the dependency is
+			     scoped to this profile and never ends up in the production jar/image. -->
+			<dependencies>
+				<dependency>
+					<groupId>org.testcontainers</groupId>
+					<artifactId>postgresql</artifactId>
+				</dependency>
+			</dependencies>
 			<build>
 				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>build-helper-maven-plugin</artifactId>
+						<version>3.5.0</version>
+						<executions>
+							<execution>
+								<id>add-stress-sources</id>
+								<phase>generate-sources</phase>
+								<goals>
+									<goal>add-source</goal>
+								</goals>
+								<configuration>
+									<sources>
+										<source>src/stress/java</source>
+									</sources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 					<plugin>
 						<groupId>org.jetbrains.kotlin</groupId>
 						<artifactId>kotlin-maven-plugin</artifactId>

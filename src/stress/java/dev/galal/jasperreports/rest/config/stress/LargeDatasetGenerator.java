@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 
 /**
- * Populates the embedded database with a relatively large dataset so the stress
+ * Populates the stress-test database with a relatively large dataset so the stress
  * test exercises the report queries against a realistic row count instead of the
  * tiny seed data used by the integration tests.
  *
@@ -57,8 +57,8 @@ public class LargeDatasetGenerator implements ApplicationRunner {
     private static final int BATCH_SIZE = 1000;
 
     private void insertBulk(int rows) {
-        // Portable JDBC batch insert; avoids H2-specific functions (e.g. SYSTEM_RANGE),
-        // so the stress database can be any embedded engine.
+        // Portable JDBC batch insert; avoids SQL-dialect-specific functions (e.g.
+        // H2's SYSTEM_RANGE), so the stress database can be any engine.
         var sql = """
                 insert into employee (first_name, last_name, email, hire_date, job_title, salary, department_id)
                 values (?, ?, ?, ?, ?, ?, ?)

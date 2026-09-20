@@ -47,13 +47,20 @@ dockerize:
     - ./mvnw clean spring-boot:build-image docker:build docker:push
 
 # Optional stress test job. Runs after dockerize, failures only warn (allow_failure).
-# Uses the "stress-test" Maven profile which forks the app with an embedded H2,
-# a large generated dataset and artificial DB latency, then runs a Gatling
-# simulation validating max p99 response time and minimum concurrent users.
+# Uses the "stress-test" Maven profile which forks the app backed by a real PostgreSQL
+# Testcontainer, a large generated dataset and (by default) no artificial DB latency,
+# then runs a Gatling simulation validating max p99 response time and minimum
+# concurrent users. The forked app needs a Docker daemon to start the container, hence
+# the dind service (DOCKER_HOST) and Ryuk is disabled for dind environments.
 stress:
   stage: stress
   image: ahmedgalalfathy/dind-jdk-21:latest
   allow_failure: true
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    TESTCONTAINERS_RYUK_DISABLED: "true"
   script:
     #download font packages needed for jasper reports to run during tests
     - apk update && apk add freetype-dev fontconfig-dev ttf-dejavu

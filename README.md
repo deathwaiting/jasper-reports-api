@@ -138,13 +138,18 @@ The stress test validates the report API under an increasing, linear load. It is
 [Gatling](https://gatling.io/) (simulations written in Kotlin) and is exposed as a separate optional
 Maven profile, so a regular `./mvnw install` never triggers it.
 
-- It forks the application with an embedded H2 database, populates a relatively large dataset
-  (50 000 employee rows by default), and adds an artificial per-connection latency to mimic a real DB.
+- It forks the application backed by a real PostgreSQL instance started with
+  Testcontainers (the Postgres image tag matches `docker-compose.yml`), populates a
+  relatively large dataset (50 000 employee rows by default), and provides realistic
+  DB round-trip latency. An extra per-connection latency can be added via
+  `stress.db.latency.ms` if needed.
 - It uses the same report fixtures as the integration tests, including parameterised reports,
   reports with image resources, sub-reports and report books.
 - Load ramps linearly from `0` to a target number of concurrent users, then holds that load.
 - Fails (or warns in CI) when the 99th percentile response time exceeds the configured maximum or
   when requests fail.
+
+> Requires a running Docker daemon, as the forked app starts a PostgreSQL Testcontainer.
 
 Run it with:
 
@@ -174,9 +179,9 @@ Gatling HTML reports are written to `target/gatling/`. All scenario knobs are ov
 | `stress.ramp.duration.seconds` | `120` | Ramp-up duration in seconds (linear increase) |
 | `stress.hold.duration.seconds` | `180` | Hold duration in seconds at peak load |
 | `stress.max.p99.ms` | `3000` | Max allowed 99th percentile response time (ms) |
-| `stress.db.latency.ms` | `10` | Artificial per-connection DB latency (ms, from `application-stress-test.properties`) |
-| `stress.db.pool.size` | `100` | Hikari pool size; embedded engines degrade with pools in the hundreds |
-| `stress.dataset.size` | `50000` | Minimum employee rows generated in the embedded DB |
+| `stress.db.latency.ms` | `0` | Extra artificial per-connection DB latency (ms); real Postgres latency is already present |
+| `stress.db.pool.size` | `300` | Hikari pool size; the Postgres container starts with `max_connections` raised to cover it |
+| `stress.dataset.size` | `50000` | Minimum employee rows generated in the stress database |
 
 In GitLab CI the stress test runs as a separate optional job after `dockerize` with
 `allow_failure: true`, so a stress regression shows up as a warning instead of breaking the pipeline.
