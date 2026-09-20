@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<!--
+		Standalone Gatling simulation module for the optional stress test.
+
+		Deliberately does NOT use the root pom as parent: a child would inherit the
+		application's full dependency graph (24 JasperReports modules, Spring Boot,
+		Hikari, Groovy 5, ...). The simulation only talks HTTP, so it needs nothing
+		from the app. Keeping this pom orphaned gives Gatling a classpath with only
+		Gatling/Scala/Kotlin and prevents app jars (e.g. the broken xalan:2.7.3 that
+		used to ship via jasperreports-xalan and killed Gatling's java.util.prefs
+		boot) from ever leaking into the simulation JVM.
+
+		Invoked by bin/stress.sh with: ./mvnw -f stress-sim/pom.xml gatling:test
+		Reports land in stress-sim/target/gatling/.
+	-->
+	<groupId>dev.galal</groupId>
+	<artifactId>jasper-reports-api-stress</artifactId>
+	<version>0.3</version>
+	<packaging>jar</packaging>
+
+	<properties>
+		<kotlin.version>2.4.20</kotlin.version>
+		<version.gatling>3.15.1</version.gatling>
+		<version.gatling-maven-plugin>4.21.11</version.gatling-maven-plugin>
+		<maven.compiler.release>25</maven.compiler.release>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>${version.gatling}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib</artifactId>
+			<version>${kotlin.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-test</artifactId>
+			<version>${kotlin.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jetbrains.kotlin</groupId>
+				<artifactId>kotlin-maven-plugin</artifactId>
+				<version>${kotlin.version}</version>
+				<executions>
+<execution>
+					<id>test-compile</id>
+					<phase>test-compile</phase>
+					<goals>
+						<goal>test-compile</goal>
+					</goals>
+					<configuration>
+						<!-- kotlin-maven-plugin does not auto-add src/test/kotlin to the
+						     test compile roots, so without this it finds "no sources"
+						     and gatling:test reports "No simulations to run". -->
+						<sourceDirs>
+							<sourceDir>src/test/kotlin</sourceDir>
+						</sourceDirs>
+					</configuration>
+				</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>io.gatling</groupId>
+				<artifactId>gatling-maven-plugin</artifactId>
+				<version>${version.gatling-maven-plugin}</version>
+			</plugin>
+		</plugins>
+	</build>
+</project>

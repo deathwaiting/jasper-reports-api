@@ -1,21 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="book" pageWidth="595" pageHeight="842" sectionType="Part" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" uuid="d2716064-8ae4-40cf-a575-33afba400e3a">
+<jasperReport name="book" pageWidth="595" pageHeight="842" sectionType="Part" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" uuid="d2716064-8ae4-40cf-a575-33afba400e3a">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="net.sf.jasperreports.print.create.bookmarks" value="true"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value="RW1wbG95ZWUgLDE1LDE1LGYwYWM4OWZhLWE2NDItNGRhOS05OTY3LWJkNWM2OGZlMjEzYzs="/>
 	<parameter name="some_date" class="java.sql.Date"/>
-	<queryString>
-		<![CDATA[select count(email) from Employee]]>
-	</queryString>
+	<query language="sql"><![CDATA[select count(email) from Employee]]></query>
 	<detail>
 		<part uuid="d520440f-6f9c-4b33-a897-1cb139f6173f">
-			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
-				<subreportParameter name="REPORT_CONNECTION">
-					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportExpression><![CDATA["./emp-report.jasper"]]></subreportExpression>
-			</p:subreportPart>
+			<component kind="subreportPart">
+				<parameter name="REPORT_CONNECTION">
+					<expression><![CDATA[$P{REPORT_CONNECTION}]]></expression>
+				</parameter>
+				<expression><![CDATA["./emp-report.jasper"]]></expression>
+			</component>
 		</part>
 	</detail>
 </jasperReport>

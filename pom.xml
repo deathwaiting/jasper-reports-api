@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.2</version>
+		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.galal</groupId>
 	<artifactId>jasper-reports-api</artifactId>
-	<version>0.2</version>
+	<version>0.3</version>
 	<name>jasper-reports-api</name>
 	<description>REST API for generating jasper reports</description>
 	<url/>
@@ -27,31 +27,12 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>21</java.version>
-		<version.jasperreports>6.20.5</version.jasperreports>
-		<version.gatling>3.15.1</version.gatling>
-		<version.gatling-maven-plugin>4.21.11</version.gatling-maven-plugin>
+		<java.version>25</java.version>
+		<version.jasperreports>7.0.8</version.jasperreports>
 		<version.kotlin>2.4.10</version.kotlin>
-		<!-- Bump the Lombok managed by Spring Boot 3.3.2 so builds work on JDK 23+ -->
-		<lombok.version>1.18.42</lombok.version>
-		<!-- Override the Testcontainers managed by Spring Boot 3.3.2: 1.19.8 bundles docker-java 3.3.6 whose default Docker API version (1.32) is below the minimum (1.40) of recent Docker daemons (e.g. 29.x), so container startup fails with "client version is too old". 1.21.x bundles docker-java which negotiates the API version. -->
-		<testcontainers.version>1.21.4</testcontainers.version>
 		<image-name>registry.gitlab.com/a.galal7/jasper-reports-api</image-name>
 		<kotlin.version>2.4.20</kotlin.version>
 	</properties>
-	<dependencyManagement>
-		<dependencies>
-			<!-- Gatling 3.15.x requires Netty 4.2 APIs (e.g. io.netty.channel.IoOps)
-			     that Spring Boot 3.3.2's BOM (netty 4.1.111) does not provide -->
-			<dependency>
-				<groupId>io.netty</groupId>
-				<artifactId>netty-bom</artifactId>
-				<version>4.2.14.Final</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -74,6 +55,19 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
+		<!-- Base JasperReports 7.0.8 modules from the 7.0.8 release. The following release
+		     modules are intentionally excluded:
+		       - jasperreports-ejbql-j2ee / hibernate-j2ee / servlets-j2ee: legacy variants that
+		         depend on javax.* APIs (javax.persistence, javax.servlet)
+		       - jasperreports-olap: depends on javax.xml.soap + mondrian 3.x / olap4j
+		       - jasperreports-hibernate: pins org.hibernate.orm:hibernate-core:6.3.1, which clashes
+		         with the Hibernate version managed by Spring Boot 4.1.1
+		       - jasperreports-spring: pins spring-core/spring-beans 6.2.19, which clashes with the
+		         Spring Framework 7.x managed by Spring Boot 4.1.1
+		       - jasperreports-custom-visualization: no 7.0.8 artifact was published
+		       - jasperreports-chart-themes: its jasperreports_extension.properties hard-references
+		         net.sf.jasperreports.spring.SpringExtensionsRegistryFactory, i.e. it needs
+		         jasperreports-spring at runtime, so it is dropped too (no report fixtures use chart themes) -->
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
 			<artifactId>jasperreports</artifactId>
@@ -82,13 +76,25 @@
 
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
-			<artifactId>jasperreports-fonts</artifactId>
+			<artifactId>jasperreports-annotation-processors</artifactId>
 			<version>${version.jasperreports}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
-			<artifactId>jasperreports-xalan</artifactId>
+			<artifactId>jasperreports-ant</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-barbecue</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-barcode4j</artifactId>
 			<version>${version.jasperreports}</version>
 		</dependency>
 
@@ -100,13 +106,7 @@
 
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
-			<artifactId>jasperreports-functions</artifactId>
-			<version>${version.jasperreports}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>net.sf.jasperreports</groupId>
-			<artifactId>jasperreports-chart-themes</artifactId>
+			<artifactId>jasperreports-charts</artifactId>
 			<version>${version.jasperreports}</version>
 		</dependency>
 
@@ -118,7 +118,113 @@
 
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
-			<artifactId>jasperreports-custom-visualization</artifactId>
+			<artifactId>jasperreports-data-adapters</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-data-adapters-http</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-ejbql</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<!-- POI-based exporters + data sources; provides Apache POI for the core ooxml
+		     JRXlsxExporter/JRDocxExporter used by ReportHandlers -->
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-excel-poi</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-fastexcel</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-fonts</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-functions</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-groovy</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-javaflow</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-javascript</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-jaxen</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-jdt</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-json</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-metadata</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<!-- PDF exporter; hosts net.sf.jasperreports.pdf.JRPdfExporter (moved out of core in 7.x)
+		     and pulls in stock com.github.librepdf:openpdf -->
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-pdf</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-servlets</artifactId>
+			<version>${version.jasperreports}</version>
+		</dependency>
+
+		<!-- XPath/XQuery data source support (not used by the fixtures). Its xalan:2.7.3
+		     transitive dep has an incomplete TransformerFactoryImpl (no org.apache.xml.serializer),
+		     but that only bites a JVM that triggers it via java.util.prefs — the app never
+		     does. Historically this caused Gatling's boot crash when the old stress flow leaked
+		     the app's test classpath into the Gatling fork; now bin/stress.sh's isolation keeps
+		     it out of the stress-sim JVM, so it is safe to keep. -->
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-xalan</artifactId>
 			<version>${version.jasperreports}</version>
 		</dependency>
 
@@ -198,6 +304,7 @@
 		<dependency>
 			<groupId>io.rest-assured</groupId>
 			<artifactId>rest-assured</artifactId>
+			<version>6.0.1</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -205,24 +312,6 @@
 			<groupId>net.javacrumbs.json-unit</groupId>
 			<artifactId>json-unit</artifactId>
 			<version>2.36.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>kotlin-stdlib</artifactId>
-			<version>${kotlin.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.gatling.highcharts</groupId>
-			<artifactId>gatling-charts-highcharts</artifactId>
-			<version>${version.gatling}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>kotlin-test</artifactId>
-			<version>${kotlin.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -290,7 +379,7 @@
 								<annotationProcessorPath>
 									<groupId>org.springframework.boot</groupId>
 									<artifactId>spring-boot-configuration-processor</artifactId>
-									<version>3.3.2</version>
+									<version>4.1.1</version>
 								</annotationProcessorPath>
 							</annotationProcessorPaths>
 						</configuration>
@@ -353,23 +442,20 @@
 	<profiles>
 		<profile>
 			<id>stress-test</id>
-			<properties>
-				<stress.server.port>18080</stress.server.port>
-				<stress.max.p99.ms>3000</stress.max.p99.ms>
-				<stress.target.vusers>1000</stress.target.vusers>
-				<stress.ramp.duration.seconds>120</stress.ramp.duration.seconds>
-				<stress.hold.duration.seconds>120</stress.hold.duration.seconds>
-				<stress.db.latency.ms>0</stress.db.latency.ms>
-				<stress.dataset.size>50000</stress.dataset.size>
-			</properties>
+			<!-- Stress knobs (target vusers, ramp/hold, max p99, db latency, dataset size,
+			     port) are passed as system properties by bin/stress.sh; the defaults live
+			     there. -->
 			<!-- The stress beans live in src/stress/java (compiled only in this profile via
-			     build-helper) and need Testcontainers at runtime. spring-boot:start forks the
-			     app on the runtime classpath (not the test classpath), so the dependency is
-			     scoped to this profile and never ends up in the production jar/image. -->
+			     build-helper) and need Testcontainers at runtime. The parent-bound repackage
+			     goal (which Spring Boot binds to the package phase whenever the plugin is
+			     configured) bundles them into target/jasper-reports-api-*.jar, which
+			     bin/stress.sh then runs with java -jar. The default (non-stress) build leaves
+			     the jar clean: no stress beans, no Testcontainers, no Gatling — only the
+			     working dev workflow ever produces the "stress jar", it is never shipped. -->
 			<dependencies>
 				<dependency>
 					<groupId>org.testcontainers</groupId>
-					<artifactId>postgresql</artifactId>
+					<artifactId>testcontainers-postgresql</artifactId>
 				</dependency>
 			</dependencies>
 			<build>
@@ -390,68 +476,6 @@
 										<source>src/stress/java</source>
 									</sources>
 								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.jetbrains.kotlin</groupId>
-						<artifactId>kotlin-maven-plugin</artifactId>
-						<version>${version.kotlin}</version>
-						<executions>
-							<execution>
-								<id>test-compile</id>
-								<goals>
-									<goal>test-compile</goal>
-								</goals>
-								<configuration>
-									<sourceDirs>
-										<sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
-									</sourceDirs>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.springframework.boot</groupId>
-						<artifactId>spring-boot-maven-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>stress-start</id>
-								<phase>pre-integration-test</phase>
-								<goals>
-									<goal>start</goal>
-								</goals>
-								<configuration>
-									<profiles>stress-test</profiles>
-									<arguments>
-										<argument>--server.port=${stress.server.port}</argument>
-									</arguments>
-									<!-- Propagate -Dstress.* Maven properties into the forked JVM -->
-									<systemPropertyVariables>
-										<stress.db.latency.ms>${stress.db.latency.ms}</stress.db.latency.ms>
-										<stress.dataset.size>${stress.dataset.size}</stress.dataset.size>
-									</systemPropertyVariables>
-								</configuration>
-							</execution>
-							<execution>
-								<id>stress-stop</id>
-								<phase>post-integration-test</phase>
-								<goals>
-									<goal>stop</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>io.gatling</groupId>
-						<artifactId>gatling-maven-plugin</artifactId>
-						<version>${version.gatling-maven-plugin}</version>
-						<executions>
-							<execution>
-								<phase>integration-test</phase>
-								<goals>
-									<goal>test</goal>
-								</goals>
 							</execution>
 						</executions>
 					</plugin>

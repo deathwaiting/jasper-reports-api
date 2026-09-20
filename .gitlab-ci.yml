@@ -16,23 +16,7 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 stages:
-  # - build
   - dockerize
-  - stress
-
-# variables:
-#   IMAGE_NAME: "yourusername/yourprojectname"
-
-# build:
-#   stage: build
-#   image: maven:3.8.4-openjdk-21
-#   script:
-#     - ./mvnw clean spring-boot:build-image docker:build docker:push
-#   artifacts:
-#     paths:
-#       - target/*.jar
-# variables:
-#   DOCKER_HOST: tcp://localhost:2375
 
 dockerize:
   stage: dockerize
@@ -45,30 +29,4 @@ dockerize:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - chmod +x ./mvnw
     - ./mvnw clean spring-boot:build-image docker:build docker:push
-
-# Optional stress test job. Runs after dockerize, failures only warn (allow_failure).
-# Uses the "stress-test" Maven profile which forks the app backed by a real PostgreSQL
-# Testcontainer, a large generated dataset and (by default) no artificial DB latency,
-# then runs a Gatling simulation validating max p99 response time and minimum
-# concurrent users. The forked app needs a Docker daemon to start the container, hence
-# the dind service (DOCKER_HOST) and Ryuk is disabled for dind environments.
-stress:
-  stage: stress
-  image: ahmedgalalfathy/dind-jdk-21:latest
-  allow_failure: true
-  services:
-    - docker:dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    TESTCONTAINERS_RYUK_DISABLED: "true"
-  script:
-    #download font packages needed for jasper reports to run during tests
-    - apk update && apk add freetype-dev fontconfig-dev ttf-dejavu
-    - chmod +x ./mvnw
-    - ./mvnw -Pstress-test verify
-  artifacts:
-    when: always
-    paths:
-      - target/gatling/
-    expire_in: 7 days
 

@@ -24,7 +24,7 @@ This project is an attempt to provide an opensource report server that fits in a
 The project is still in early stages, and currently has the following limitations:
 - Reports JRXML files should be saved in a local storage accessible to the service.
 
-The service is currently built using Spring boot 3.x, so, it can use Spring boot various features for security, like JWT, OIDC and OAuth2 support, and the service can be built as: as Fat-jar, Docker image, etc ..
+The service is currently built using Spring boot 4.x and jasper reports 7.x, so, it can use Spring boot various features for security, like JWT, OIDC and OAuth2 support, and the service can be built as: as Fat-jar, Docker image, etc ..
 
 This is still in early stage. It will mostly work, but not tested in a large system. Use it with caution and some good testing 😶.
 
@@ -51,7 +51,7 @@ docker run -it --tty --rm\
  -e SPRING_DATASOURCE_USERNAME=postgres\
  -e SPRING_DATASOURCE_PASSWORD=postgres\
  -p 8080:8080\
- registry.gitlab.com/a.galal7/jasper-reports-api:0.1
+ registry.gitlab.com/a.galal7/jasper-reports-api:0.3
 ```
 
 To disable security you can use this instead
@@ -63,7 +63,7 @@ docker run -it --tty --rm\
  -e SPRING_DATASOURCE_USERNAME=postgres\
  -e SPRING_DATASOURCE_PASSWORD=postgres\
  -p 8080:8080\
- registry.gitlab.com/a.galal7/jasper-reports-api:0.1
+ registry.gitlab.com/a.galal7/jasper-reports-api:0.3
 ```
 
 If for example you have the report `emp-report.jrxml` in the report directory, you can generate it as PDF using
@@ -135,53 +135,51 @@ This will :
 # Stress testing
 
 The stress test validates the report API under an increasing, linear load. It is implemented with
-[Gatling](https://gatling.io/) (simulations written in Kotlin) and is exposed as a separate optional
-Maven profile, so a regular `./mvnw install` never triggers it.
+[Gatling](https://gatling.io/) (simulations written in Kotlin) and is exposed as a completely optional
+developer-run wrapper, so a regular `./mvnw install` never triggers it.
 
-- It forks the application backed by a real PostgreSQL instance started with
-  Testcontainers (the Postgres image tag matches `docker-compose.yml`), populates a
-  relatively large dataset (50 000 employee rows by default), and provides realistic
-  DB round-trip latency. An extra per-connection latency can be added via
-  `stress.db.latency.ms` if needed.
+- `bin/stress.sh` first clean-installs the application under test (`./mvnw clean install -DskipTests`), then builds the runnable stress jar (`./mvnw -Pstress-test package -DskipTests` — the stress-test profile adds the stress beans + Testcontainers), boots it with
+  `java -jar` and the `stress-test` Spring profile, runs the Gatling simulation from the isolated
+  `stress-sim/` Maven module, and always shuts the app down afterwards (success, failed assertions,
+  or Ctrl-C — the teardown is a `trap` on `EXIT`, so no orphaned JVM). Reports land in
+  `stress-sim/target/gatling/`, the app log in `target/stress-app.log`.
+- The app is backed by a real PostgreSQL instance started with Testcontainers, populated with a
+  relatively large dataset (50 000 employee rows by default), and provides realistic DB round-trip
+  latency. An extra per-connection latency can be added via `stress.db.latency.ms` if needed.
 - It uses the same report fixtures as the integration tests, including parameterised reports,
   reports with image resources, sub-reports and report books.
 - Load ramps linearly from `0` to a target number of concurrent users, then holds that load.
-- Fails (or warns in CI) when the 99th percentile response time exceeds the configured maximum or
-  when requests fail.
+- Fails when the 99th percentile response time exceeds the configured maximum or when requests fail.
 
-> Requires a running Docker daemon, as the forked app starts a PostgreSQL Testcontainer.
+> Requires a running Docker daemon, as the app starts a PostgreSQL Testcontainer. The app allocates
+> over 6 GB under 1000 concurrent users — don't run this on a small/shared machine. It is NOT part
+> of GitLab CI.
 
 Run it with:
 
 ```shell
-# Build, start the app with the stress-test profile, run Gatling, stop the app
-./mvnw -Pstress-test verify
+# Build, start the app, run Gatling, stop the app
+bin/stress.sh
 
-# Customise the scenario
-./mvnw -Pstress-test verify \
-  -Dstress.target.vusers=100 \
-  -Dstress.ramp.duration.seconds=300 \
-  -Dstress.hold.duration.seconds=600 \
-  -Dstress.max.p99.ms=5000 \
-  -Dstress.db.latency.ms=20 \
-  -Dstress.dataset.size=100000
+# Customise the scenario (env vars, all optional)
+STRESS_TARGET_VUSERS=100 STRESS_RAMP_SECONDS=300 STRESS_HOLD_SECONDS=600 \
+STRESS_MAX_P99_MS=5000 STRESS_DB_LATENCY_MS=20 STRESS_DATASET_SIZE=100000 \
+bin/stress.sh
 
 # Run Gatling against an already-running instance (skips build + app lifecycle)
-./mvnw -Pstress-test gatling:test -Dstress.base.url=http://localhost:8080
+./mvnw -f stress-sim/pom.xml gatling:test -Dstress.base.url=http://localhost:8080
 ```
 
-Gatling HTML reports are written to `target/gatling/`. All scenario knobs are overridable via `-Dstress.*` system properties:
+All scenario knobs are overridable via `-Dstress.*` system properties (or the `STRESS_*` env vars
+that `bin/stress.sh` maps onto them):
 
 | Property | Default | Meaning |
 | --- | --- | --- |
-| `stress.base.url` | `http://localhost:18080` | Target server URL |
+| `stress.base.url` | `http://127.0.0.1:18080` | Target server URL |
 | `stress.target.vusers` | `1000` | Peak / minimum concurrent users to ramp to |
 | `stress.ramp.duration.seconds` | `120` | Ramp-up duration in seconds (linear increase) |
-| `stress.hold.duration.seconds` | `180` | Hold duration in seconds at peak load |
+| `stress.hold.duration.seconds` | `120` | Hold duration in seconds at peak load |
 | `stress.max.p99.ms` | `3000` | Max allowed 99th percentile response time (ms) |
 | `stress.db.latency.ms` | `0` | Extra artificial per-connection DB latency (ms); real Postgres latency is already present |
 | `stress.db.pool.size` | `300` | Hikari pool size; the Postgres container starts with `max_connections` raised to cover it |
 | `stress.dataset.size` | `50000` | Minimum employee rows generated in the stress database |
-
-In GitLab CI the stress test runs as a separate optional job after `dockerize` with
-`allow_failure: true`, so a stress regression shows up as a warning instead of breaking the pipeline.

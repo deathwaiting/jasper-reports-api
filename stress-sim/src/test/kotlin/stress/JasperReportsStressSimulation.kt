@@ -14,10 +14,10 @@ class JasperReportsStressSimulation : Simulation() {
     private val maxP99Ms: Int = System.getProperty("stress.max.p99.ms", "3000").toInt()
     private val minConcurrentUsers: Int = System.getProperty("stress.target.vusers", "1000").toInt()
     private val rampDuration: Duration = Duration.ofSeconds(
-        System.getProperty("stress.ramp.duration.seconds", "120").toLong()
+        System.getProperty("stress.ramp.duration.seconds", "30").toLong()
     )
     private val holdDuration: Duration = Duration.ofSeconds(
-        System.getProperty("stress.hold.duration.seconds", "180").toLong()
+        System.getProperty("stress.hold.duration.seconds", "120").toLong()
     )
 
     private val httpProtocol: HttpProtocolBuilder = http

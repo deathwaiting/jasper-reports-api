@@ -1,32 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isTitleNewPage="true" uuid="fb66eba7-2a26-4252-a4da-3febbb83d327">
+<jasperReport name="report" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" titleNewPage="true" uuid="fb66eba7-2a26-4252-a4da-3febbb83d327">
 	<property name="com.jaspersoft.studio.data.sql.tables" value="RW1wbG95ZWUgLDE1LDE1LDlkODQ1YWM2LTZkNjQtNDQ4NC05NWY3LTY4MTBkNzM5Y2E5Mjs="/>
 	<parameter name="some_time" class="java.sql.Time"/>
-	<queryString>
-		<![CDATA[select count(email) from Employee]]>
-	</queryString>
-	<background>
-		<band splitType="Stretch"/>
-	</background>
-	<title>
-		<band height="126">
-			<staticText>
-				<reportElement x="0" y="0" width="555" height="126" uuid="eeca4632-83f8-46ad-a53b-ca6752f9bc6e"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font size="18" isBold="true"/>
-				</textElement>
-				<text><![CDATA[Sub Report Demo]]></text>
-			</staticText>
-		</band>
+	<query language="sql"><![CDATA[select count(email) from Employee]]></query>
+	<title height="126">
+		<element kind="staticText" uuid="eeca4632-83f8-46ad-a53b-ca6752f9bc6e" x="0" y="0" width="555" height="126" fontSize="18.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Sub Report Demo]]></text>
+		</element>
 	</title>
 	<detail>
-		<band height="802" splitType="Stretch">
-			<subreport>
-				<reportElement x="0" y="0" width="555" height="802" uuid="732590ae-d993-4626-8314-12d320e50c8b"/>
+		<band height="802">
+			<element kind="subreport" uuid="732590ae-d993-4626-8314-12d320e50c8b" x="0" y="0" width="555" height="802">
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["./emp-report.jasper"]]></subreportExpression>
-			</subreport>
+				<expression><![CDATA["./emp-report.jasper"]]></expression>
+			</element>
 		</band>
 	</detail>
 </jasperReport>
