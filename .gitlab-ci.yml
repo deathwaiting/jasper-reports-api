@@ -20,7 +20,9 @@ stages:
 
 dockerize:
   stage: dockerize
-  image: ahmedgalalfathy/dind-jdk-25:latest
+  image:
+    name: ahmedgalalfathy/dind-jdk-25:latest
+    pull_policy: always
   services:
     - docker:dind
   script:
