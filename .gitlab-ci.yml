@@ -20,7 +20,7 @@ stages:
 
 dockerize:
   stage: dockerize
-  image: ahmedgalalfathy/dind-jdk-25:latest
+  image: mbopm/docker-dind-openjdk-alpine:29.8.0-dind-alpine3.24-jdk25
   services:
     - docker:dind
   script:
