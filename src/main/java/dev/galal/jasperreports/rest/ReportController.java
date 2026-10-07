@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.net.URI;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class ReportController {
     private final JdbcReportGeneratorService jdbcReportGen;
 
     @GetMapping(value = "/**", produces = APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> getReport(HttpServletRequest request , @RequestParam Map<String, String> params) {
+    public ResponseEntity<StreamingResponseBody> getReport(HttpServletRequest request , @RequestParam Map<String, String> params) {
         var reportPath = URI.create(REPORTS_URL).relativize(URI.create(request.getServletPath()));
         var report = jdbcReportGen.generate(reportPath.toString(), params);
 
@@ -36,6 +37,6 @@ public class ReportController {
 
         return ResponseEntity.ok()
                 .headers(headers)
-                .body(report.content());
+                .body(report.body());
     }
 }

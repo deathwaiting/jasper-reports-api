@@ -18,9 +18,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
@@ -49,7 +51,7 @@ public class JdbcReportGeneratorService {
     private static final boolean ENABLE_SUB_REPORT_COMPILE = false;
     public static final String JR_FORCE_COMPILE_PARAM = "JR_force_compile";
 
-    public record Report(String fileName, String mediaType, byte[] content){}
+    public record Report(String fileName, String mediaType, StreamingResponseBody body){}
 
     @Value("${dev.galal.jasper-rest-server.reports-dir}")
     String reportsDir;
@@ -79,13 +81,12 @@ public class JdbcReportGeneratorService {
 
         var ext = getFileExtension(requestedReport);
         var reportHandler = getReportHandler(ext);
-        var mediaType = reportHandler.mediaType();
-        var report = doGenerateReport(requestedReport, reportHandler, params);
+        StreamingResponseBody body = outputStream -> doGenerateReport(requestedReport, reportHandler, params, outputStream);
 
-        return new Report(requestedReport, mediaType, report);
+        return new Report(requestedReport, reportHandler.mediaType(), body);
     }
 
-    private byte[] doGenerateReport(String requestedReport, ReportHandler handler, Map<String, String> params) {
+    private void doGenerateReport(String requestedReport, ReportHandler handler, Map<String, String> params, OutputStream outputStream) {
         try {
             var jasperReport = compileOrGetFromCache(requestedReport);
             var jrxmlPath = getJrxmlFilePath(requestedReport);
@@ -96,13 +97,14 @@ public class JdbcReportGeneratorService {
 
             var typedParams = toTypedParams(params, jasperReport);
 
+            JasperPrint jasperPrint;
             try (Connection connection = dataSource.getConnection()) {
                 // JRFiller does not close connections it didn't open, so we must
                 // return this one to the pool ourselves.
-                var jasperPrint = fillReport(jasperReport, jrxmlPath, typedParams, connection);
-                return handler.exporter().apply(jasperPrint);
+                jasperPrint = fillReport(jasperReport, jrxmlPath, typedParams, connection);
             }
-        } catch (SQLException | JRException e) {
+            handler.exporter().export(jasperPrint, outputStream);
+        } catch (SQLException | JRException | IOException e) {
             log.error("Failed to generate report", e);
             throw new JRRuntimeException(e);
         }

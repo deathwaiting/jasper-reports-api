@@ -12,11 +12,9 @@ import net.sf.jasperreports.export.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.springframework.web.ErrorResponseException;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.function.Function;
+import java.io.OutputStream;
 
 import static dev.galal.jasperreports.rest.config.exception.AppError.REPORT_UNSUPPORTED;
 import static java.util.Optional.ofNullable;
@@ -24,7 +22,12 @@ import static org.springframework.http.HttpStatus.NOT_ACCEPTABLE;
 
 public class ReportHandlers {
 
-    public record ReportHandler(String extension, String mediaType, Function<JasperPrint,byte[]> exporter) {}
+    @FunctionalInterface
+    public interface ReportExporter {
+        void export(JasperPrint print, OutputStream outputStream) throws JRException, IOException;
+    }
+
+    public record ReportHandler(String extension, String mediaType, ReportExporter exporter) {}
 
     private static final ReportHandler pdfHandler = new ReportHandler("pdf", "application/pdf", ReportHandlers::exportTpPdf);
     private static final ReportHandler xlsxhandler =
@@ -35,6 +38,7 @@ public class ReportHandlers {
     private static final ReportHandler docxHandler = new ReportHandler("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", ReportHandlers::exportToDocx);
 
     private static final ReportHandler htmlHandler = new ReportHandler("html", "text/html", ReportHandlers::exportToHtml);
+
     private static final ImmutableMap<String,ReportHandler> MediaTypes =
             Lists.immutable.of(pdfHandler, xlsxhandler, csvHandler, docxHandler, htmlHandler)
                     .toImmutableMap(ReportHandler::extension, it -> it);
@@ -50,66 +54,41 @@ public class ReportHandlers {
     }
 
 
-    private static byte[] exportToXlsx(JasperPrint print) {
-        // Configure the XLSX exporter
+    private static void exportToXlsx(JasperPrint print, OutputStream outputStream) throws JRException {
         var configuration = new SimpleXlsxReportConfiguration();
         configuration.setOnePagePerSheet(true);
         configuration.setIgnoreGraphics(false);
 
         var exporter = new JRXlsxExporter();
-        try (var byteArrayOutputStream = new ByteArrayOutputStream()){
-            exporter.setExporterInput(new SimpleExporterInput(print));
-            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(byteArrayOutputStream));
-            exporter.setConfiguration(configuration);
-            exporter.exportReport();
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException | JRException e) {
-            throw new RuntimeException(e);
-        }
+        exporter.setExporterInput(new SimpleExporterInput(print));
+        exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));
+        exporter.setConfiguration(configuration);
+        exporter.exportReport();
     }
 
 
-    private static byte[] exportToDocx(JasperPrint print) {
+    private static void exportToDocx(JasperPrint print, OutputStream outputStream) throws JRException {
         var exporter = new JRDocxExporter();
-        try (var byteArrayOutputStream = new ByteArrayOutputStream()){
-            exporter.setExporterInput(new SimpleExporterInput(print));
-            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(byteArrayOutputStream));
-            exporter.exportReport();
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException | JRException e) {
-            throw new RuntimeException(e);
-        }
+        exporter.setExporterInput(new SimpleExporterInput(print));
+        exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));
+        exporter.exportReport();
     }
 
-    private static byte[] exportToCsv(JasperPrint print) {
+    private static void exportToCsv(JasperPrint print, OutputStream outputStream) throws JRException {
         var exporter = new JRCsvExporter();
-        try (var byteArrayOutputStream = new ByteArrayOutputStream()){
-            exporter.setExporterInput(new SimpleExporterInput(print));
-            exporter.setExporterOutput(new SimpleWriterExporterOutput(byteArrayOutputStream));
-            exporter.exportReport();
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException | JRException e) {
-            throw new RuntimeException(e);
-        }
+        exporter.setExporterInput(new SimpleExporterInput(print));
+        exporter.setExporterOutput(new SimpleWriterExporterOutput(outputStream));
+        exporter.exportReport();
     }
 
-    private static byte[] exportTpPdf(JasperPrint print) {
-        try {
-            return JasperExportManager.exportReportToPdf(print);
-        } catch (JRException e) {
-            throw new RuntimeException(e);
-        }
+    private static void exportTpPdf(JasperPrint print, OutputStream outputStream) throws JRException {
+        JasperExportManager.exportReportToPdfStream(print, outputStream);
     }
 
-    private static byte[] exportToHtml(JasperPrint print) {
+    private static void exportToHtml(JasperPrint print, OutputStream outputStream) throws JRException {
         var exporter = new HtmlExporter();
-        try (var byteArrayOutputStream = new ByteArrayOutputStream()){
-            exporter.setExporterInput(new SimpleExporterInput(print));
-            exporter.setExporterOutput(new SimpleHtmlExporterOutput(byteArrayOutputStream));
-            exporter.exportReport();
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException | JRException e) {
-            throw new RuntimeException(e);
-        }
+        exporter.setExporterInput(new SimpleExporterInput(print));
+        exporter.setExporterOutput(new SimpleHtmlExporterOutput(outputStream));
+        exporter.exportReport();
     }
 }
