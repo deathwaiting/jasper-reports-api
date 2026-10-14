@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
 import static dev.galal.jasperreports.rest.config.cache.CacheConfig.REPORTS_CACHE;
@@ -47,6 +48,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 @Slf4j
 public class JdbcReportGeneratorService {
 
+    private final Semaphore jasperPermits = new Semaphore(Runtime.getRuntime().availableProcessors());
 
     private static final boolean ENABLE_SUB_REPORT_COMPILE = false;
     public static final String JR_FORCE_COMPILE_PARAM = "JR_force_compile";
@@ -88,6 +90,8 @@ public class JdbcReportGeneratorService {
 
     private void doGenerateReport(String requestedReport, ReportHandler handler, Map<String, String> params, OutputStream outputStream) {
         try {
+
+
             var jasperReport = compileOrGetFromCache(requestedReport);
             var jrxmlPath = getJrxmlFilePath(requestedReport);
 
@@ -101,12 +105,15 @@ public class JdbcReportGeneratorService {
             try (Connection connection = dataSource.getConnection()) {
                 // JRFiller does not close connections it didn't open, so we must
                 // return this one to the pool ourselves.
+                jasperPermits.acquire();
                 jasperPrint = fillReport(jasperReport, jrxmlPath, typedParams, connection);
             }
             handler.exporter().export(jasperPrint, outputStream);
-        } catch (SQLException | JRException | IOException e) {
+        } catch (SQLException | JRException | IOException | InterruptedException e) {
             log.error("Failed to generate report", e);
             throw new JRRuntimeException(e);
+        } finally {
+            jasperPermits.release();
         }
     }
 

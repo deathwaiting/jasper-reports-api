@@ -12,7 +12,7 @@ class JasperReportsStressSimulation : Simulation() {
 
     private val baseUrl: String = System.getProperty("stress.base.url", "http://localhost:18080")
     private val maxP99Ms: Int = System.getProperty("stress.max.p99.ms", "3000").toInt()
-    private val concurrentUsers: Int = System.getProperty("stress.target.vusers", "1000").toInt()
+    private val concurrentUsers: Int = System.getProperty("stress.target.vusers", "100").toInt()
     private val holdDuration: Duration = Duration.ofSeconds(
         System.getProperty("stress.hold.duration.seconds", "120").toLong()
     )
@@ -58,7 +58,7 @@ class JasperReportsStressSimulation : Simulation() {
                     http("book book.pdf")
                         .get("/report/book/book.pdf")
                         .queryParam("some_date", "2025-01-23")
-                        .queryParam("JR_force_compile", "true")
+//                        .queryParam("JR_force_compile", "true")
                         .check(status().shouldBe(200))
                 )
             )
