@@ -14,15 +14,17 @@
 # don't run this on a shared/small worker.
 #
 # Usage:
-#   bin/stress.sh                     # default profile (1000 vusers, p99 < 3000 ms)
+#   bin/stress.sh                     # default profile (ramp 100 -> 1000 vusers, p99 < 3000 ms)
 #   STRESS_TARGET_VUSERS=500 bin/stress.sh
 #
 # Overrides (env vars -> -Dstress.* system props for the app + simulation):
 #   STRESS_PORT (default 18080)
-#   STRESS_TARGET_VUSERS (default 1000)
+#   STRESS_RAMP_START_VUSERS (default 100) -> simulation; ramp starts from this concurrency
+#   STRESS_TARGET_VUSERS (default 1000)    -> simulation; ramp ceiling (run ends here if never aborted)
 #   STRESS_MAX_P99_MS (default 3000)
-#   STRESS_RAMP_SECONDS (default 120)
-#   STRESS_HOLD_SECONDS (default 120)
+#   STRESS_RAMP_SECONDS (default 120)      -> simulation; ramp start -> target over this duration
+#   STRESS_MIN_SUCCESS_PERCENT (default 99.0) -> simulation; abort if rolling success rate falls below
+#   STRESS_FAIL_WINDOW_SECONDS (default 30)   -> simulation; rolling window size for the success rate
 #   STRESS_DB_LATENCY_MS (default 0)   -> app JVM only; >=1 adds fake per-connection latency
 #   STRESS_DATASET_SIZE (default 50000) -> app JVM only; employee rows seeded by LargeDatasetGenerator
 set -euo pipefail
@@ -31,10 +33,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 PORT="${STRESS_PORT:-18080}"
-VUSERS="${STRESS_TARGET_VUSERS:-100}"
+RAMP_START="${STRESS_RAMP_START_VUSERS:-10}"
+VUSERS="${STRESS_TARGET_VUSERS:-1000}"
 MAX_P99="${STRESS_MAX_P99_MS:-3000}"
 RAMP="${STRESS_RAMP_SECONDS:-120}"
-HOLD="${STRESS_HOLD_SECONDS:-120}"
+MIN_SUCCESS_PCT="${STRESS_MIN_SUCCESS_PERCENT:-99.0}"
+FAIL_WINDOW="${STRESS_FAIL_WINDOW_SECONDS:-30}"
 LATENCY="${STRESS_DB_LATENCY_MS:-0}"
 DATASET="${STRESS_DATASET_SIZE:-50000}"
 
@@ -99,8 +103,10 @@ echo "== running the Gatling simulation (stress-sim module) =="
 ./mvnw -f stress-sim/pom.xml gatling:test \
   -Dstress.base.url="${BASE_URL}" \
   -Dstress.max.p99.ms="${MAX_P99}" \
+  -Dstress.ramp.start.vusers="${RAMP_START}" \
   -Dstress.target.vusers="${VUSERS}" \
   -Dstress.ramp.duration.seconds="${RAMP}" \
-  -Dstress.hold.duration.seconds="${HOLD}"
+  -Dstress.min.success.percent="${MIN_SUCCESS_PCT}" \
+  -Dstress.fail.window.seconds="${FAIL_WINDOW}"
 
 echo "== stress test finished; reports under stress-sim/target/gatling/ =="
